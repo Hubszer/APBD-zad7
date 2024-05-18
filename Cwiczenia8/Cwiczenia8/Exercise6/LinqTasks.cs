@@ -303,14 +303,43 @@ namespace Exercise6
         /// </summary>
         public static IEnumerable<object> Task11()
         {
-            IEnumerable<object> result = Emps.GroupBy(e => e.Deptno)
+            var employees = new List<Emp>{
+                new Emp { Empno = 1, Ename = "Alice", Job = "Researcher", Salary = 5000, Deptno = 1 },
+                new Emp { Empno = 2, Ename = "Bob", Job = "Researcher", Salary = 5500, Deptno = 1 },
+                new Emp { Empno = 3, Ename = "Charlie", Job = "Salesperson", Salary = 6000, Deptno = 2 },
+                new Emp { Empno = 4, Ename = "David", Job = "Salesperson", Salary = 6200, Deptno = 2 },
+                new Emp { Empno = 5, Ename = "Eva", Job = "Salesperson", Salary = 6300, Deptno = 2 },
+                new Emp { Empno = 6, Ename = "Frank", Job = "Salesperson", Salary = 6400, Deptno = 2 },
+                new Emp { Empno = 7, Ename = "Grace", Job = "Salesperson", Salary = 6500, Deptno = 2 },
+                new Emp { Empno = 8, Ename = "Hank", Job = "Clerk", Salary = 3000, Deptno = 3 },
+                new Emp { Empno = 9, Ename = "Ivy", Job = "Accountant", Salary = 5200, Deptno = 4 },
+                new Emp { Empno = 10, Ename = "Jack", Job = "Accountant", Salary = 5400, Deptno = 4 }
+            };
+            
+            var departments = new List<Dept>
+            {
+                new Dept { Deptno = 1, Dname = "RESEARCH", Loc = "New York" },
+                new Dept { Deptno = 2, Dname = "SALES", Loc = "Chicago" },
+                new Dept { Deptno = 3, Dname = "HR", Loc = "Los Angeles" },
+                new Dept { Deptno = 4, Dname = "ACCOUNTING", Loc = "San Francisco" }
+            };
+
+            IEnumerable<object> result = employees
+                .Join(departments, e => e.Deptno, d => d.Deptno, (e, d) => new { e, d })
+                .GroupBy(e => e.d.Dname)
                 .Where(e => e.Count() > 1)
-                .Select(e => new { name = e.Key, numOfEmplyees = e.Count()});
+                .Select(e => new
+                {
+                    name = e.Key,
+                    numOfEmployees = e.Count()
+                })
+                .ToList();
+                
+                /*Emps.GroupBy(e => e.Deptno)
+                .Where(e => e.Count() > 1)
+                .Select(e => new { name = e.Key, numOfEmplyees = e.Count()});*/
             return result;
-            /*Object[] objects = {
-                new Object(){name: "RESEARCH", numOfEmployees: 3},
-                new Object() {name: "SALES", numOfEmployees: 5 },};
-            /*return result;#1#*/
+          
         }
 
         /// <summary>
@@ -322,7 +351,7 @@ namespace Exercise6
         /// </summary>
         public static IEnumerable<Emp> Task12()
         {
-            IEnumerable<Emp> result = null;
+            IEnumerable<Emp> result = Emps.Subordinates();
             return result;
         }
 
@@ -335,7 +364,10 @@ namespace Exercise6
         /// </summary>
         public static int Task13(int[] arr)
         {
-            int result = 0;
+            int result = arr.GroupBy(x => x)
+                .Where(x => x.Count() % 2 != 0)
+                .Select(x => x.Key)
+                .First();
             //result=
             return result;
         }
@@ -346,20 +378,27 @@ namespace Exercise6
         /// </summary>
         public static IEnumerable<Dept> Task14()
         {
-            IEnumerable<Dept> result = null;
-            //result =
+            IEnumerable<Dept> result = Depts
+                .GroupJoin(Emps,
+                    dept => dept.Deptno,
+                    emp => emp.Deptno,
+                    (dept, emp) => new { Dept = dept, EmpCount = emp.Count() })
+                .Where(d => d.EmpCount is 0 or >= 5)
+                .OrderBy(d => d.Dept.Dname)
+                .Select(d => d.Dept);
             return result;
+
         }
     }
 
     public static class CustomExtensionMethods
     {
-        public static IEnumerable<Emp> subordinates()
+        public static IEnumerable<Emp> Subordinates(this IEnumerable<Emp> emps)
         {
-            return Emp.Where(e => e.Subordinates.Any())
-                .OrderBy(e => e.LastName)
+            return emps
+                .Where(e => e.Mgr != null)
+                .OrderBy(e => e.Ename)
                 .ThenByDescending(e => e.Salary);
         }
-       
     }
 }
