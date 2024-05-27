@@ -351,7 +351,14 @@ namespace Exercise6
         /// </summary>
         public static IEnumerable<Emp> Task12()
         {
-            IEnumerable<Emp> result = Emps.Subordinates();
+            /*IEnumerable<Emp> result = Emps.Subordinates();
+            return result;*/
+            
+            IEnumerable<Emp> result = Emps
+                .Where(emp => emp.MyCustomExtensionMethod(Emps))
+                .OrderBy(emp => emp.Ename)
+                .ThenByDescending(emp => emp.Salary);
+
             return result;
         }
 
@@ -379,26 +386,19 @@ namespace Exercise6
         public static IEnumerable<Dept> Task14()
         {
             IEnumerable<Dept> result = Depts
-                .GroupJoin(Emps,
-                    dept => dept.Deptno,
-                    emp => emp.Deptno,
-                    (dept, emp) => new { Dept = dept, EmpCount = emp.Count() })
-                .Where(d => d.EmpCount is 0 or >= 5)
-                .OrderBy(d => d.Dept.Dname)
-                .Select(d => d.Dept);
-            return result;
+                .Where(dept => Emps.Count(emp => emp.Deptno == dept.Deptno) == 5 ||
+                               Emps.Count(emp => emp.Deptno == dept.Deptno) == 0)
+                .OrderBy(dept => dept.Dname);
 
+            return result;
         }
     }
 
     public static class CustomExtensionMethods
     {
-        public static IEnumerable<Emp> Subordinates(this IEnumerable<Emp> emps)
+        public static bool MyCustomExtensionMethod(this Emp emp, IEnumerable<Emp> employees)
         {
-            return emps
-                .Where(e => e.Mgr != null)
-                .OrderBy(e => e.Ename)
-                .ThenByDescending(e => e.Salary);
+            return employees.Any(e => e.Mgr != null && e.Mgr.Empno == emp.Empno);
         }
     }
 }
